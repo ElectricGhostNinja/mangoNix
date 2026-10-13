@@ -1,0 +1,69 @@
+--- a/Services/Compositor/MangoService.qml
++++ b/Services/Compositor/MangoService.qml
+@@ -357,7 +357,7 @@
+   // Scale query (mmsg -g -A) - DWL doesn't provide scale info
+   property QtObject _scaleQuery: Process {
+     id: scaleQuery
+-    command: ["mmsg", "-g", "-A"]
++    command: ["mmsg", "get", "all-monitors"]
+ 
+     property string buffer: ""
+ 
+@@ -420,11 +420,7 @@
+       dwlOutput.setTags(1 << (tagId - 1)); // tagId is 1-based, bitmask is 0-based
+     } else {
+       // Fallback to mmsg
+-      const cmd = ["mmsg", "-s", "-t", tagId.toString()];
+-      if (outputName && Object.keys(internal.monitorScales).length > 1) {
+-        cmd.push("-o", outputName);
+-      }
+-      Quickshell.execDetached(cmd);
++      Quickshell.execDetached(["mmsg", "dispatch", "view," + tagId.toString() + ",0"]);
+     }
+   }
+ 
+@@ -443,7 +439,7 @@
+     if (window && window.handle) {
+       window.handle.close();
+     } else {
+-      Quickshell.execDetached(["mmsg", "-s", "-d", "killclient"]);
++      Quickshell.execDetached(["mmsg", "dispatch", "killclient"]);
+     }
+   }
+ 
+@@ -451,7 +447,7 @@
+     const screens = Quickshell.screens;
+     const cmds = [];
+     for (let i = 0; i < screens.length; i++) {
+-      cmds.push("mmsg -s -d disable_monitor," + screens[i].name);
++      cmds.push("mmsg dispatch disable_monitor," + screens[i].name);
+     }
+     if (cmds.length > 0) {
+       Quickshell.execDetached(["sh", "-c", cmds.join(" && ")]);
+@@ -462,7 +458,7 @@
+     const screens = Quickshell.screens;
+     const cmds = [];
+     for (let i = 0; i < screens.length; i++) {
+-      cmds.push("mmsg -s -d enable_monitor," + screens[i].name);
++      cmds.push("mmsg dispatch enable_monitor," + screens[i].name);
+     }
+     if (cmds.length > 0) {
+       Quickshell.execDetached(["sh", "-c", cmds.join(" && ")]);
+@@ -470,7 +466,7 @@
+   }
+ 
+   function logout() {
+-    Quickshell.execDetached(["mmsg", "-s", "-q"]);
++    Quickshell.execDetached(["mmsg", "dispatch", "quit"]);
+   }
+ 
+   function cycleKeyboardLayout() {
+@@ -483,7 +479,7 @@
+ 
+   function spawn(command) {
+     try {
+-      Quickshell.execDetached(["mmsg", "-s", "-d", "spawn_shell," + command.join(" ")]);
++      Quickshell.execDetached(command);
+     } catch (e) {
+       Logger.e("MangoService", "Failed to spawn command:", e);
+     }
